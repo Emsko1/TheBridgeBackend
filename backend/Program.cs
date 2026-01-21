@@ -16,7 +16,14 @@ builder.Services.AddControllers();
 builder.Services.AddSignalR();
 builder.Services.AddCors(options => {
     options.AddDefaultPolicy(policy => 
-        policy.WithOrigins("http://localhost:3000", "http://localhost:5000", "http://localhost:5173", "http://localhost:5174", "http://localhost:5175")
+        policy.WithOrigins(
+            "http://localhost:3000", 
+            "http://localhost:5000", 
+            "http://localhost:5173", 
+            "http://localhost:5174", 
+            "http://localhost:5175",
+            "https://thebridge-frontend.onrender.com" // Production frontend
+        )
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials());
