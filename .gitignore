@@ -1,0 +1,54 @@
+# Build results
+bin/
+obj/
+Debug/
+Release/
+
+# Visual Studio
+.vs/
+.vscode/
+*.user
+*.sln.iml
+*.suo
+*.cache
+
+# Visual Studio Code
+.vscode/
+*.code-workspace
+
+# ReSharper
+.idea/
+*.sln.iml
+
+# Entity Framework
+*.db
+*.db-shm
+*.db-wal
+
+# Environment variables
+.env
+.env.local
+.env.*.local
+
+# Node modules (if using any frontend tools)
+node_modules/
+npm-debug.log
+
+# OS files
+.DS_Store
+Thumbs.db
+
+# Dependencies
+.nuget/
+
+# Runtime files
+*.pdb
+*.dll
+*.exe
+
+# Logs
+*.log
+
+# IDE settings
+.editorconfig
+.vscode/settings.json
