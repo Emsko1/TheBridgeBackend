@@ -1,0 +1,30 @@
+services:
+  - type: web
+    name: thebridge-backend
+    env: dotnet
+    region: oregon
+    plan: free
+    buildCommand: cd backend && dotnet publish -c Release -o out
+    startCommand: cd backend && dotnet out/Bridge.Backend.dll
+    envVars:
+      - key: ASPNETCORE_ENVIRONMENT
+        value: Production
+      - key: ASPNETCORE_URLS
+        value: http://+:10000
+      - key: ConnectionStrings__DefaultConnection
+        fromDatabase:
+          name: thebridge-db
+          property: connectionString
+      - key: Jwt__Key
+        sync: false
+      - key: Paystack__SecretKey
+        sync: false
+      - key: Frontend__BaseUrl
+        sync: false
+
+databases:
+  - name: thebridge-db
+    databaseName: thebridge
+    user: thebridgeuser
+    region: oregon
+    plan: free

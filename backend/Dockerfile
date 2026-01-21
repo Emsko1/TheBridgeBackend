@@ -1,14 +1,15 @@
 FROM mcr.microsoft.com/dotnet/aspnet:8.0 AS base
 WORKDIR /app
-EXPOSE 80
+EXPOSE 10000
+ENV ASPNETCORE_URLS=http://+:10000
 
 FROM mcr.microsoft.com/dotnet/sdk:8.0 AS build
 WORKDIR /src
-COPY ["Bridge.Backend.csproj", "./"]
+COPY ["backend/Bridge.Backend.csproj", "backend/"]
 
-RUN dotnet restore "Bridge.Backend.csproj"
+RUN dotnet restore "backend/Bridge.Backend.csproj"
 COPY . .
-RUN dotnet publish "Bridge.Backend.csproj" -c Release -o /app/publish
+RUN dotnet publish "backend/Bridge.Backend.csproj" -c Release -o /app/publish
 
 FROM base AS final
 WORKDIR /app
