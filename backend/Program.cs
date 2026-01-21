@@ -22,7 +22,7 @@ builder.Services.AddCors(options => {
             "http://localhost:5173", 
             "http://localhost:5174", 
             "http://localhost:5175",
-            "https://thebridge-frontend.onrender.com" // Production frontend
+            "https://the-bridge-frontend.vercel.app" // Production frontend (Vercel)
         )
               .AllowAnyHeader()
               .AllowAnyMethod()
