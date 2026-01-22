@@ -69,6 +69,23 @@ builder.Services.AddScoped<Bridge.Backend.Services.IExternalListingProvider, Bri
 var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();
+
+// Global Exception Handler
+app.Use(async (context, next) =>
+{
+    try
+    {
+        await next();
+    }
+    catch (Exception ex)
+    {
+        context.Response.StatusCode = 500;
+        context.Response.ContentType = "application/json";
+        var result = System.Text.Json.JsonSerializer.Serialize(new { message = "Internal Server Error", error = ex.Message, stackTrace = ex.StackTrace });
+        await context.Response.WriteAsync(result);
+    }
+});
+
 app.UseCors();
 app.UseAuthentication();
 app.UseAuthorization();

@@ -297,3 +297,4 @@ C:\Users\HP\Documents\TheBridgeBackend\backend\obj\Debug\net8.0\refint\Bridge.Ba
 C:\Users\HP\Documents\TheBridgeBackend\backend\obj\Debug\net8.0\Bridge.Backend.pdb
 C:\Users\HP\Documents\TheBridgeBackend\backend\obj\Debug\net8.0\Bridge.Backend.genruntimeconfig.cache
 C:\Users\HP\Documents\TheBridgeBackend\backend\obj\Debug\net8.0\ref\Bridge.Backend.dll
+C:\Users\HP\Documents\TheBridgeBackend\backend\bin\Debug\net8.0\appsettings.Development.json
