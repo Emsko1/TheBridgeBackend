@@ -30,7 +30,9 @@ builder.Services.AddCors(options => {
 });
 
 // EF Core (PostgreSQL)
-builder.Services.AddDbContext<BridgeDbContext>(options => options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection")));
+builder.Services.AddDbContext<BridgeDbContext>(options => 
+    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"),
+        npgsqlOptions => npgsqlOptions.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null)));
 
 // JWT (placeholder)
 var jwtKey = builder.Configuration["Jwt:Key"] ?? "replace_with_long_secret_key_change_in_production";
