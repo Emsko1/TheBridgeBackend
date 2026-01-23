@@ -25,6 +25,10 @@ namespace Bridge.Backend.Data {
                 v => System.Text.Json.JsonSerializer.Serialize(v, (System.Text.Json.JsonSerializerOptions)null),
                 v => System.Text.Json.JsonSerializer.Deserialize<List<string>>(v, (System.Text.Json.JsonSerializerOptions)null)
             );
+
+        modelBuilder.Entity<User>()
+            .Property(e => e.OtpExpiration)
+            .HasColumnType("timestamp with time zone");
     }
   }
 }
