@@ -13,7 +13,7 @@ using System.Reflection;
 [assembly: System.Reflection.AssemblyCompanyAttribute("Bridge.Backend")]
 [assembly: System.Reflection.AssemblyConfigurationAttribute("Debug")]
 [assembly: System.Reflection.AssemblyFileVersionAttribute("1.0.0.0")]
-[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+3eb38c065e2395e733c10464f92dfc8e146bfc4c")]
+[assembly: System.Reflection.AssemblyInformationalVersionAttribute("1.0.0+5ee302e025fb6911daee4033e90b60cbf279e1ad")]
 [assembly: System.Reflection.AssemblyProductAttribute("Bridge.Backend")]
 [assembly: System.Reflection.AssemblyTitleAttribute("Bridge.Backend")]
 [assembly: System.Reflection.AssemblyVersionAttribute("1.0.0.0")]

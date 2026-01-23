@@ -60,29 +60,64 @@ namespace Bridge.Backend.Controllers {
             newUser.KycStatus = "None";
         }
         
-        // Generate OTP
-        var otp = new Random().Next(100000, 999999).ToString();
-        newUser.OtpCode = otp;
-        newUser.OtpExpiration = DateTime.UtcNow.AddMinutes(10);
-        newUser.IsEmailVerified = false;
+        // Check if email verification is enabled
+        var enableEmailVerification = _cfg.GetValue<bool>("EmailSettings:EnableEmailVerification", true);
 
-        _db.Users.Add(newUser);
-        await _db.SaveChangesAsync();
+        if (enableEmailVerification)
+        {
+            // Generate OTP
+            var otp = new Random().Next(100000, 999999).ToString();
+            newUser.OtpCode = otp;
+            newUser.OtpExpiration = DateTime.UtcNow.AddMinutes(10);
+            newUser.IsEmailVerified = false;
 
-        // Send OTP Email
-        await _emailService.SendEmailAsync(newUser.Email, "Verify your email", $"Your verification code is: <b>{otp}</b>. It expires in 10 minutes.");
-        
-        return Ok(new { 
-          message = "Registration successful. Please check your email for verification code.",
-          user = new { 
-            id = newUser.Id, 
-            email = newUser.Email, 
-            name = newUser.Name, 
-            role = newUser.Role,
-            kycStatus = newUser.KycStatus,
-            isEmailVerified = newUser.IsEmailVerified
-          } 
-        });
+            _db.Users.Add(newUser);
+            await _db.SaveChangesAsync();
+
+            // Send OTP Email
+            try {
+                await _emailService.SendEmailAsync(newUser.Email, "Verify your email", $"Your verification code is: <b>{otp}</b>. It expires in 10 minutes.");
+            } catch (Exception emailEx) {
+                // Rollback user creation
+                _db.Users.Remove(newUser);
+                await _db.SaveChangesAsync();
+                return BadRequest(new { message = "Registration failed: Could not send verification email. Please check your email address or try again later. " + emailEx.Message });
+            }
+            
+            return Ok(new { 
+              message = "Registration successful. Please check your email for verification code.",
+              user = new { 
+                id = newUser.Id, 
+                email = newUser.Email, 
+                name = newUser.Name, 
+                role = newUser.Role,
+                kycStatus = newUser.KycStatus,
+                isEmailVerified = newUser.IsEmailVerified
+              } 
+            });
+        }
+        else
+        {
+            // Bypass verification
+            newUser.IsEmailVerified = true;
+            newUser.OtpCode = null;
+            newUser.OtpExpiration = null;
+
+            _db.Users.Add(newUser);
+            await _db.SaveChangesAsync();
+
+            return Ok(new { 
+              message = "Registration successful.",
+              user = new { 
+                id = newUser.Id, 
+                email = newUser.Email, 
+                name = newUser.Name, 
+                role = newUser.Role,
+                kycStatus = newUser.KycStatus,
+                isEmailVerified = newUser.IsEmailVerified
+              } 
+            });
+        }
       } catch(Exception ex) {
         Console.WriteLine($"Register error: {ex.Message}");
         return BadRequest(new { message = "Registration failed: " + ex.Message });

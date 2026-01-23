@@ -29,22 +29,32 @@ namespace Bridge.Backend.Services
                 return;
             }
 
-            var client = new SmtpClient(smtpHost, smtpPort)
+            try 
             {
-                Credentials = new NetworkCredential(smtpUser, smtpPass),
-                EnableSsl = true
-            };
+                var client = new SmtpClient(smtpHost, smtpPort)
+                {
+                    Credentials = new NetworkCredential(smtpUser, smtpPass),
+                    EnableSsl = true,
+                    Timeout = 10000 // 10 seconds timeout
+                };
 
-            var mailMessage = new MailMessage
+                var mailMessage = new MailMessage
+                {
+                    From = new MailAddress(smtpUser),
+                    Subject = subject,
+                    Body = message,
+                    IsBodyHtml = true,
+                };
+                mailMessage.To.Add(toEmail);
+
+                await client.SendMailAsync(mailMessage);
+            }
+            catch (Exception ex)
             {
-                From = new MailAddress(smtpUser),
-                Subject = subject,
-                Body = message,
-                IsBodyHtml = true,
-            };
-            mailMessage.To.Add(toEmail);
-
-            await client.SendMailAsync(mailMessage);
+                // Log the error
+                System.Console.WriteLine($"[EmailService] Error sending email: {ex.Message}");
+                throw new Exception($"Failed to send email: {ex.Message}");
+            }
         }
     }
 }

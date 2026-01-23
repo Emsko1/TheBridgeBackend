@@ -74,20 +74,8 @@ app.UseSwagger();
 app.UseSwaggerUI();
 
 // Global Exception Handler
-app.Use(async (context, next) =>
-{
-    try
-    {
-        await next();
-    }
-    catch (Exception ex)
-    {
-        context.Response.StatusCode = 500;
-        context.Response.ContentType = "application/json";
-        var result = System.Text.Json.JsonSerializer.Serialize(new { message = "Internal Server Error", error = ex.Message, stackTrace = ex.StackTrace });
-        await context.Response.WriteAsync(result);
-    }
-});
+// Global Exception Handler
+app.UseMiddleware<Bridge.Backend.Middleware.ExceptionMiddleware>();
 
 app.UseCors();
 app.UseAuthentication();
