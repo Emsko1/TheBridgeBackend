@@ -30,8 +30,11 @@ builder.Services.AddCors(options => {
 });
 
 // EF Core (PostgreSQL)
+var connectionString = builder.Configuration.GetConnectionString("DefaultConnection");
+Console.WriteLine($"[Startup] Using Connection String: {connectionString?.Split('@').LastOrDefault() ?? "NULL"} (Masked)");
+
 builder.Services.AddDbContext<BridgeDbContext>(options => 
-    options.UseNpgsql(builder.Configuration.GetConnectionString("DefaultConnection"),
+    options.UseNpgsql(connectionString,
         npgsqlOptions => npgsqlOptions.EnableRetryOnFailure(5, TimeSpan.FromSeconds(10), null)));
 
 // JWT (placeholder)
