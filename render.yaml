@@ -5,6 +5,7 @@ services:
     region: oregon
     plan: free
     buildCommand: cd backend && dotnet publish -c Release -o out
+    preDeployCommand: cd backend && dotnet ef database update --no-build
     startCommand: cd backend && dotnet out/Bridge.Backend.dll
     envVars:
       - key: ASPNETCORE_ENVIRONMENT
