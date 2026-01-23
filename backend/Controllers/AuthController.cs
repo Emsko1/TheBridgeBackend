@@ -68,7 +68,7 @@ namespace Bridge.Backend.Controllers {
             // Generate OTP
             var otp = new Random().Next(100000, 999999).ToString();
             newUser.OtpCode = otp;
-            newUser.OtpExpiration = DateTime.UtcNow.AddMinutes(10);
+            newUser.OtpExpiration = DateTimeOffset.UtcNow.AddMinutes(10);
             newUser.IsEmailVerified = false;
 
             _db.Users.Add(newUser);
@@ -132,7 +132,7 @@ namespace Bridge.Backend.Controllers {
 
         if (user.IsEmailVerified) return BadRequest(new { message = "Email already verified" });
 
-        if (user.OtpCode != request.Otp || user.OtpExpiration < DateTime.UtcNow) {
+        if (user.OtpCode != request.Otp || user.OtpExpiration < DateTimeOffset.UtcNow) {
             return BadRequest(new { message = "Invalid or expired OTP" });
         }
 
