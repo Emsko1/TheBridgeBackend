@@ -15,7 +15,7 @@ services:
       - key: ConnectionStrings__DefaultConnection
         fromDatabase:
           name: thebridge-db
-          property: internalConnectionString
+          property: connectionString
       - key: Jwt__Key
         sync: false
       - key: Paystack__SecretKey
