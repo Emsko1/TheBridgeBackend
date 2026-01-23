@@ -14,5 +14,10 @@ namespace Bridge.Backend.Models {
     public string? RegistrationNumber { get; set; }
     public List<string>? DocumentUrls { get; set; }
     public string? RejectionReason { get; set; }
+
+    // OTP Verification
+    public string? OtpCode { get; set; }
+    public DateTime? OtpExpiration { get; set; }
+    public bool IsEmailVerified { get; set; } = false;
   }
 }

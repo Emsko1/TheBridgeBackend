@@ -66,6 +66,9 @@ builder.Services.AddSingleton<Bridge.Backend.Services.MockPaymentProvider>();
 builder.Services.AddHttpClient<Bridge.Backend.Services.ExternalListingProvider>();
 builder.Services.AddScoped<Bridge.Backend.Services.IExternalListingProvider, Bridge.Backend.Services.ExternalListingProvider>();
 
+// Email Service
+builder.Services.AddScoped<Bridge.Backend.Services.IEmailService, Bridge.Backend.Services.EmailService>();
+
 var app = builder.Build();
 app.UseSwagger();
 app.UseSwaggerUI();

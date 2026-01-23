@@ -18,21 +18,28 @@ namespace Bridge.Backend.Controllers {
   public class AuthController : ControllerBase {
     private readonly BridgeDbContext _db;
     private readonly IConfiguration _cfg;
-    public AuthController(BridgeDbContext db, IConfiguration cfg){ _db = db; _cfg = cfg; }
+    private readonly Bridge.Backend.Services.IEmailService _emailService;
+
+    public AuthController(BridgeDbContext db, IConfiguration cfg, Bridge.Backend.Services.IEmailService emailService)
+    { 
+        _db = db; 
+        _cfg = cfg; 
+        _emailService = emailService;
+    }
 
     [HttpPost("register")]
     [AllowAnonymous]
     public async Task<IActionResult> Register([FromBody] User user){
-      // Validate required fields
-      if(string.IsNullOrWhiteSpace(user?.Email) || string.IsNullOrWhiteSpace(user?.PasswordHash) || string.IsNullOrWhiteSpace(user?.Name)) {
-        return BadRequest(new { message = "Name, Email and password are required" });
-      }
-
-      // Check if user already exists
-      var exists = await _db.Users.AnyAsync(u => u.Email == user.Email);
-      if(exists) return BadRequest(new { message = "User with this email already exists" });
-
       try {
+        // Validate required fields
+        if(string.IsNullOrWhiteSpace(user?.Email) || string.IsNullOrWhiteSpace(user?.PasswordHash) || string.IsNullOrWhiteSpace(user?.Name)) {
+          return BadRequest(new { message = "Name, Email and password are required" });
+        }
+
+        // Check if user already exists
+        var exists = await _db.Users.AnyAsync(u => u.Email == user.Email);
+        if(exists) return BadRequest(new { message = "User with this email already exists" });
+
         // Hash password
         var pwHash = BCrypt.Net.BCrypt.HashPassword(user.PasswordHash);
         
@@ -53,23 +60,63 @@ namespace Bridge.Backend.Controllers {
             newUser.KycStatus = "None";
         }
         
+        // Generate OTP
+        var otp = new Random().Next(100000, 999999).ToString();
+        newUser.OtpCode = otp;
+        newUser.OtpExpiration = DateTime.UtcNow.AddMinutes(10);
+        newUser.IsEmailVerified = false;
+
         _db.Users.Add(newUser);
         await _db.SaveChangesAsync();
+
+        // Send OTP Email
+        await _emailService.SendEmailAsync(newUser.Email, "Verify your email", $"Your verification code is: <b>{otp}</b>. It expires in 10 minutes.");
         
         return Ok(new { 
-          message = "Registration successful",
+          message = "Registration successful. Please check your email for verification code.",
           user = new { 
             id = newUser.Id, 
             email = newUser.Email, 
             name = newUser.Name, 
             role = newUser.Role,
-            kycStatus = newUser.KycStatus
+            kycStatus = newUser.KycStatus,
+            isEmailVerified = newUser.IsEmailVerified
           } 
         });
       } catch(Exception ex) {
         Console.WriteLine($"Register error: {ex.Message}");
         return BadRequest(new { message = "Registration failed: " + ex.Message });
       }
+    }
+
+    [HttpPost("verify-email")]
+    [AllowAnonymous]
+    public async Task<IActionResult> VerifyEmail([FromBody] VerifyEmailRequest request) {
+        var user = await _db.Users.SingleOrDefaultAsync(u => u.Email == request.Email);
+        if (user == null) return BadRequest(new { message = "User not found" });
+
+        if (user.IsEmailVerified) return BadRequest(new { message = "Email already verified" });
+
+        if (user.OtpCode != request.Otp || user.OtpExpiration < DateTime.UtcNow) {
+            return BadRequest(new { message = "Invalid or expired OTP" });
+        }
+
+        user.IsEmailVerified = true;
+        user.OtpCode = null;
+        user.OtpExpiration = null;
+        await _db.SaveChangesAsync();
+
+        var token = GenerateJwt(user);
+        return Ok(new { 
+            message = "Email verified successfully", 
+            token, 
+            user = new { user.Id, user.Email, user.Name, user.Role, user.IsEmailVerified } 
+        });
+    }
+
+    public class VerifyEmailRequest {
+        public string Email { get; set; }
+        public string Otp { get; set; }
     }
 
     [HttpPost("kyc/status/{userId}")]
@@ -94,8 +141,13 @@ namespace Bridge.Backend.Controllers {
       var user = await _db.Users.SingleOrDefaultAsync(u => u.Email == login.Email);
       if(user == null) return Unauthorized();
       if(!BCrypt.Net.BCrypt.Verify(login.PasswordHash, user.PasswordHash)) return Unauthorized();
+      
+      if(!user.IsEmailVerified) {
+          return Unauthorized(new { message = "Email not verified. Please verify your email." });
+      }
+
       var token = GenerateJwt(user);
-      return Ok(new { token, user = new { user.Id, user.Email, user.Name, user.Role } });
+      return Ok(new { token, user = new { user.Id, user.Email, user.Name, user.Role, user.IsEmailVerified } });
     }
 
     [HttpGet("me")]
