@@ -9,6 +9,7 @@ namespace Bridge.Backend.Data {
     public DbSet<Listing> Listings { get; set; }
     public DbSet<EscrowTransaction> EscrowTransactions { get; set; }
     public DbSet<Bid> Bids { get; set; }
+    public DbSet<Delivery> Deliveries { get; set; }
 
     protected override void OnModelCreating(ModelBuilder modelBuilder)
     {

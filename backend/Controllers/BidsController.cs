@@ -1,4 +1,6 @@
 using Microsoft.AspNetCore.Mvc;
+using Microsoft.AspNetCore.SignalR;
+using Bridge.Backend.Hubs;
 using Bridge.Backend.Data;
 using Bridge.Backend.Models;
 using System.Threading.Tasks;
@@ -13,9 +15,11 @@ namespace Bridge.Backend.Controllers {
   [Route("api/[controller]")]
   public class BidsController : ControllerBase {
     private readonly BridgeDbContext _db;
+    private readonly IHubContext<MarketplaceHub> _hubContext;
 
-    public BidsController(BridgeDbContext db) {
+    public BidsController(BridgeDbContext db, IHubContext<MarketplaceHub> hubContext) {
       _db = db;
+      _hubContext = hubContext;
     }
 
     [HttpGet("listing/{listingId}")]
@@ -53,6 +57,9 @@ namespace Bridge.Backend.Controllers {
 
       _db.Bids.Add(bid);
       await _db.SaveChangesAsync();
+
+      // Broadcast bid
+      await _hubContext.Clients.All.SendAsync("BidPlaced", bid);
 
       return Ok(bid);
     }

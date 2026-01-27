@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using Microsoft.EntityFrameworkCore.Migrations;
 
 #nullable disable
@@ -61,12 +60,13 @@ namespace Bridge.Backend.Migrations
                     Price = table.Column<decimal>(type: "numeric", nullable: false),
                     Year = table.Column<int>(type: "integer", nullable: true),
                     Location = table.Column<string>(type: "text", nullable: false),
-                    Photos = table.Column<List<string>>(type: "text[]", nullable: false),
+                    Photos = table.Column<string>(type: "text", nullable: false),
                     Status = table.Column<string>(type: "text", nullable: false),
                     SaleStartTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     SaleEndTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
                     IsTender = table.Column<bool>(type: "boolean", nullable: false),
-                    MinimumBid = table.Column<decimal>(type: "numeric", nullable: true)
+                    MinimumBid = table.Column<decimal>(type: "numeric", nullable: true),
+                    Source = table.Column<string>(type: "text", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -85,8 +85,11 @@ namespace Bridge.Backend.Migrations
                     PasswordHash = table.Column<string>(type: "text", nullable: true),
                     BusinessName = table.Column<string>(type: "text", nullable: true),
                     RegistrationNumber = table.Column<string>(type: "text", nullable: true),
-                    DocumentUrls = table.Column<List<string>>(type: "text[]", nullable: true),
-                    RejectionReason = table.Column<string>(type: "text", nullable: true)
+                    DocumentUrls = table.Column<string>(type: "text", nullable: true),
+                    RejectionReason = table.Column<string>(type: "text", nullable: true),
+                    OtpCode = table.Column<string>(type: "text", nullable: true),
+                    OtpExpiration = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
+                    IsEmailVerified = table.Column<bool>(type: "boolean", nullable: false)
                 },
                 constraints: table =>
                 {

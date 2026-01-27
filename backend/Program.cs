@@ -12,21 +12,15 @@ using Microsoft.AspNetCore.Authorization;
 
 var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddSwaggerGen();
-builder.Services.AddControllers();
+builder.Services.AddControllers().AddJsonOptions(options => {
+    options.JsonSerializerOptions.PropertyNameCaseInsensitive = true;
+});
 builder.Services.AddSignalR();
 builder.Services.AddCors(options => {
     options.AddDefaultPolicy(policy => 
-        policy.WithOrigins(
-            "http://localhost:3000", 
-            "http://localhost:5000", 
-            "http://localhost:5173", 
-            "http://localhost:5174", 
-            "http://localhost:5175",
-            "https://the-bridge-frontend.vercel.app" // Production frontend (Vercel)
-        )
+        policy.AllowAnyOrigin()
               .AllowAnyHeader()
-              .AllowAnyMethod()
-              .AllowCredentials());
+              .AllowAnyMethod());
 });
 
 // EF Core (PostgreSQL)

@@ -12,8 +12,8 @@ using Npgsql.EntityFrameworkCore.PostgreSQL.Metadata;
 namespace Bridge.Backend.Migrations
 {
     [DbContext(typeof(BridgeDbContext))]
-    [Migration("20260123112152_FixMappingErrors2")]
-    partial class FixMappingErrors2
+    [Migration("20260127091125_AddDeliveries")]
+    partial class AddDeliveries
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
@@ -50,6 +50,47 @@ namespace Bridge.Backend.Migrations
                     b.HasKey("Id");
 
                     b.ToTable("Bids");
+                });
+
+            modelBuilder.Entity("Bridge.Backend.Models.Delivery", b =>
+                {
+                    b.Property<Guid>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("uuid");
+
+                    b.Property<Guid>("BuyerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<DateTime>("CreatedAt")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<string>("DeliveryAddress")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<DateTime?>("EstimatedDeliveryTime")
+                        .HasColumnType("timestamp with time zone");
+
+                    b.Property<Guid>("ListingId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("PickupAddress")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<Guid>("SellerId")
+                        .HasColumnType("uuid");
+
+                    b.Property<string>("Status")
+                        .IsRequired()
+                        .HasColumnType("text");
+
+                    b.Property<string>("TrackingHistory")
+                        .HasColumnType("text");
+
+                    b.HasKey("Id");
+
+                    b.ToTable("Deliveries");
                 });
 
             modelBuilder.Entity("Bridge.Backend.Models.EscrowTransaction", b =>
@@ -176,6 +217,9 @@ namespace Bridge.Backend.Migrations
 
                     b.Property<string>("KycStatus")
                         .HasColumnType("text");
+
+                    b.Property<DateTimeOffset?>("LastActive")
+                        .HasColumnType("timestamp with time zone");
 
                     b.Property<string>("Name")
                         .HasColumnType("text");

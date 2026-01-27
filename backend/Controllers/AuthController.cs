@@ -29,31 +29,31 @@ namespace Bridge.Backend.Controllers {
 
     [HttpPost("register")]
     [AllowAnonymous]
-    public async Task<IActionResult> Register([FromBody] User user){
+    public async Task<IActionResult> Register([FromBody] RegisterDto registerDto){
       try {
-        // Validate required fields
-        if(string.IsNullOrWhiteSpace(user?.Email) || string.IsNullOrWhiteSpace(user?.PasswordHash) || string.IsNullOrWhiteSpace(user?.Name)) {
+        // DataAnnotations in DTO handle most validation, but we check nulls just in case binding fails silently
+        if(string.IsNullOrWhiteSpace(registerDto?.Email) || string.IsNullOrWhiteSpace(registerDto?.Password) || string.IsNullOrWhiteSpace(registerDto?.Name)) {
           return BadRequest(new { message = "Name, Email and password are required" });
         }
 
         // Check if user already exists
-        var exists = await _db.Users.AnyAsync(u => u.Email == user.Email);
+        var exists = await _db.Users.AnyAsync(u => u.Email == registerDto.Email);
         if(exists) return BadRequest(new { message = "User with this email already exists" });
 
         // Hash password
-        var pwHash = BCrypt.Net.BCrypt.HashPassword(user.PasswordHash);
+        var pwHash = BCrypt.Net.BCrypt.HashPassword(registerDto.Password);
         
         // Create new user
         var newUser = new User {
           Id = Guid.NewGuid(),
-          Name = user.Name,
-          Email = user.Email,
+          Name = registerDto.Name,
+          Email = registerDto.Email,
           PasswordHash = pwHash,
-          Role = user.Role ?? "Buyer", // Allow role selection or default to Buyer
-          KycStatus = "Submitted", // Default to Submitted if docs provided, else None
-          BusinessName = user.BusinessName,
-          RegistrationNumber = user.RegistrationNumber,
-          DocumentUrls = user.DocumentUrls ?? new List<string>()
+          Role = registerDto.Role ?? "Buyer", 
+          KycStatus = "Submitted", 
+          BusinessName = registerDto.BusinessName,
+          RegistrationNumber = registerDto.RegistrationNumber,
+          DocumentUrls = registerDto.DocumentUrls ?? new List<string>()
         };
 
         if (newUser.DocumentUrls.Count == 0 && string.IsNullOrEmpty(newUser.BusinessName)) {
@@ -171,16 +171,33 @@ namespace Bridge.Backend.Controllers {
 
     [HttpPost("login")]
     [AllowAnonymous]
-    public async Task<IActionResult> Login([FromBody] User login){
-      if(string.IsNullOrEmpty(login.Email) || string.IsNullOrEmpty(login.PasswordHash)) return BadRequest("Email and password required");
-      var user = await _db.Users.SingleOrDefaultAsync(u => u.Email == login.Email);
-      if(user == null) return Unauthorized();
-      if(!BCrypt.Net.BCrypt.Verify(login.PasswordHash, user.PasswordHash)) return Unauthorized();
+    public async Task<IActionResult> Login([FromBody] LoginDto loginDto){
+      Console.WriteLine($"[Login Attempt] Email: '{loginDto.Email}', Password Length: {loginDto.Password?.Length ?? 0}");
+      
+      if(string.IsNullOrEmpty(loginDto.Email) || string.IsNullOrEmpty(loginDto.Password)) {
+          Console.WriteLine("[Login Failed] Missing email or password");
+          return BadRequest("Email and password required");
+      }
+
+      var user = await _db.Users.SingleOrDefaultAsync(u => u.Email == loginDto.Email);
+      if(user == null) {
+          Console.WriteLine($"[Login Failed] User not found: {loginDto.Email}");
+          return Unauthorized();
+      }
+
+      Console.WriteLine($"[Login Debug] User found: {user.Id}, Hash: {user.PasswordHash?.Substring(0, 10)}...");
+
+      if(!BCrypt.Net.BCrypt.Verify(loginDto.Password, user.PasswordHash)) {
+          Console.WriteLine("[Login Failed] Password mismatch");
+          return Unauthorized();
+      }
       
       if(!user.IsEmailVerified) {
+          Console.WriteLine("[Login Failed] Email not verified");
           return Unauthorized(new { message = "Email not verified. Please verify your email." });
       }
 
+      Console.WriteLine("[Login Success]");
       var token = GenerateJwt(user);
       return Ok(new { token, user = new { user.Id, user.Email, user.Name, user.Role, user.IsEmailVerified } });
     }

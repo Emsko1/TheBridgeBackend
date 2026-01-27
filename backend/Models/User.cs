@@ -19,5 +19,8 @@ namespace Bridge.Backend.Models {
     public string? OtpCode { get; set; }
     public DateTimeOffset? OtpExpiration { get; set; }
     public bool IsEmailVerified { get; set; } = false;
+
+    // Presence
+    public DateTimeOffset? LastActive { get; set; }
   }
 }

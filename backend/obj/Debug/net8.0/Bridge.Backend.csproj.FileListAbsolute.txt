@@ -166,7 +166,6 @@ C:\Users\HP\Documents\TheBridgeBackend\backend\bin\Debug\net8.0\Swashbuckle.AspN
 C:\Users\HP\Documents\TheBridgeBackend\backend\bin\Debug\net8.0\Swashbuckle.AspNetCore.SwaggerUI.dll
 C:\Users\HP\Documents\TheBridgeBackend\backend\bin\Debug\net8.0\System.IdentityModel.Tokens.Jwt.dll
 C:\Users\HP\Documents\TheBridgeBackend\backend\bin\Debug\net8.0\appsettings.json
-C:\Users\HP\Documents\TheBridgeBackend\backend\bin\Debug\net8.0\appsettings.Production.json
 C:\Users\HP\Documents\TheBridgeBackend\backend\bin\Debug\net8.0\Bridge.Backend.staticwebassets.endpoints.json
 C:\Users\HP\Documents\TheBridgeBackend\backend\bin\Debug\net8.0\Bridge.Backend.deps.json
 C:\Users\HP\Documents\TheBridgeBackend\backend\bin\Debug\net8.0\Bridge.Backend.runtimeconfig.json
@@ -297,5 +296,3 @@ C:\Users\HP\Documents\TheBridgeBackend\backend\obj\Debug\net8.0\refint\Bridge.Ba
 C:\Users\HP\Documents\TheBridgeBackend\backend\obj\Debug\net8.0\Bridge.Backend.pdb
 C:\Users\HP\Documents\TheBridgeBackend\backend\obj\Debug\net8.0\Bridge.Backend.genruntimeconfig.cache
 C:\Users\HP\Documents\TheBridgeBackend\backend\obj\Debug\net8.0\ref\Bridge.Backend.dll
-C:\Users\HP\Documents\TheBridgeBackend\backend\bin\Debug\net8.0\appsettings.Development.json
-C:\Users\HP\Documents\TheBridgeBackend\backend\bin\Debug\net8.0\data.json
