@@ -18,7 +18,7 @@ builder.Services.AddControllers().AddJsonOptions(options => {
 builder.Services.AddSignalR();
 builder.Services.AddCors(options => {
     options.AddDefaultPolicy(policy => 
-        policy.WithOrigins("http://localhost:5173", "https://the-bridge-frontend.vercel.app")
+        policy.SetIsOriginAllowed(origin => true) // Allow any origin for development/tunneling
               .AllowAnyHeader()
               .AllowAnyMethod()
               .AllowCredentials());
@@ -76,6 +76,7 @@ app.UseSwaggerUI();
 app.UseMiddleware<Bridge.Backend.Middleware.ExceptionMiddleware>();
 
 app.UseCors();
+app.UseStaticFiles(); // Enable serving images
 app.UseAuthentication();
 app.UseAuthorization();
 app.MapControllers();

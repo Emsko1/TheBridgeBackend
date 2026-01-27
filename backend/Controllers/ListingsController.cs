@@ -26,19 +26,16 @@ namespace Bridge.Backend.Controllers {
     public async Task<ActionResult<IEnumerable<Listing>>> GetAll()
     {
       try {
-        var items = await _db.Listings.ToListAsync();
+        var items = await _db.Listings.AsNoTracking().ToListAsync(); // AsNoTracking to modify in memory without EF issues
         
-        // Force update if old description exists (checking for the old Evil Spirit description)
-        if (items.Count > 0 && items.Any(i => i.Title == "2012 Honda Accord (Evil Spirit)" && (string.IsNullOrEmpty(i.Description) || !i.Description.StartsWith("Honda Accord Evil Spirit"))))
-        {
-            _db.Listings.RemoveRange(items);
-            await _db.SaveChangesAsync();
-            items.Clear();
+        // Transform photo URLs
+        var baseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
+        foreach (var item in items) {
+            item.Photos = item.Photos.Select(p => GetFullUrl(p, baseUrl)).ToList();
         }
 
         if (items.Count == 0)
         {
-          // seed sample if empty
           // seed sample if empty
           items = new List<Listing> {
             new Listing { 
@@ -73,43 +70,9 @@ namespace Bridge.Backend.Controllers {
               Location="Lekki", 
               Description="Super clean foreign used GLK 350. Pristine condition, black leather interior, navigation system, power boot.", 
               Photos = new List<string> { "https://images.unsplash.com/photo-1618843479313-40f8afb4b4d8?auto=format&fit=crop&w=800&q=80" } 
-            },
-            new Listing { 
-              Id=Guid.NewGuid(), 
-              SellerId=Guid.NewGuid(), 
-              Type="Car", 
-              Title="2015 Toyota Highlander Limited", 
-              Price=32000000, 
-              Year=2015, 
-              Location="Port Harcourt", 
-              Description="3 rows seater, thumbstart, beige leather interior, foreign used, DVD headrest.", 
-              Photos = new List<string> { "https://images.unsplash.com/photo-1609521263047-f8f205293f24?auto=format&fit=crop&w=800&q=80" } 
-            },
-            new Listing { 
-              Id=Guid.NewGuid(), 
-              SellerId=Guid.NewGuid(), 
-              Type="Car", 
-              Title="2010 Toyota Camry (Muscle)", 
-              Price=4500000, 
-              Year=2010, 
-              Location="Ibadan", 
-              Description="Registered Nigerian used Toyota Camry (Muscle). Sound engine, chilling AC, papers are complete. Minor scratch on bumper.", 
-              Photos = new List<string> { "https://images.unsplash.com/photo-1621007947382-bb3c3968e3bb?auto=format&fit=crop&w=800&q=80" } 
-            },
-            new Listing { 
-              Id=Guid.NewGuid(), 
-              SellerId=Guid.NewGuid(), 
-              Type="Car", 
-              Title="2012 Honda Accord (Evil Spirit)", 
-              Price=3800000, 
-              Year=2012, 
-              Location="Lagos", 
-              Description="Honda Accord Evil Spirit. V4 engine, leather seat, alloy rim, sharp transmission. First body, no accident history.", 
-              Photos = new List<string> { "https://images.unsplash.com/photo-1590362891991-f776e747a588?auto=format&fit=crop&w=800&q=80" } 
             }
           };
           
-          // Save seed data to DB so it persists
           _db.Listings.AddRange(items);
           await _db.SaveChangesAsync();
         }
@@ -117,81 +80,6 @@ namespace Bridge.Backend.Controllers {
       } catch (Exception ex) {
           return StatusCode(500, new { message = "Failed to load listings", error = ex.Message, stack = ex.StackTrace });
       }
-    }
-
-    [HttpGet("debug-photos")]
-    [AllowAnonymous]
-    public async Task<IActionResult> DebugPhotos() {
-        var connection = _db.Database.GetDbConnection();
-        await connection.OpenAsync();
-        using var command = connection.CreateCommand();
-        command.CommandText = "SELECT \"Id\", \"Photos\" FROM \"Listings\"";
-        var result = new List<object>();
-        using var reader = await command.ExecuteReaderAsync();
-        while (await reader.ReadAsync()) {
-            result.Add(new {
-                Id = reader.GetGuid(0),
-                PhotosRaw = reader.GetValue(1).ToString()
-            });
-        }
-        return Ok(result);
-    }
-
-    [HttpPost("reset-data")]
-    [AllowAnonymous]
-    public async Task<IActionResult> ResetData() {
-        await _db.Database.ExecuteSqlRawAsync("TRUNCATE TABLE \"Listings\"");
-        return Ok(new { message = "Listings table truncated" });
-    }
-
-    [HttpPost("fix-photos")]
-    [AllowAnonymous]
-    public async Task<IActionResult> FixPhotos() {
-        var connection = _db.Database.GetDbConnection();
-        await connection.OpenAsync();
-        
-        var listingsToUpdate = new List<(Guid Id, string NewPhotos)>();
-
-        using (var command = connection.CreateCommand()) {
-            command.CommandText = "SELECT \"Id\", \"Photos\" FROM \"Listings\"";
-            using var reader = await command.ExecuteReaderAsync();
-            while (await reader.ReadAsync()) {
-                var id = reader.GetGuid(0);
-                var raw = reader.GetValue(1).ToString();
-                
-                if (string.IsNullOrEmpty(raw) || raw.StartsWith("[")) continue;
-
-                if (raw.StartsWith("{") && raw.EndsWith("}")) {
-                    var content = raw.Substring(1, raw.Length - 2);
-                    // Handle empty case
-                    if (string.IsNullOrWhiteSpace(content)) {
-                        listingsToUpdate.Add((id, "[]"));
-                        continue;
-                    }
-                    
-                    var items = content.Split(',');
-                    var jsonItems = items.Select(i => {
-                        var trimmed = i.Trim();
-                        // If it's already properly quoted (Postgres text array with quotes), keep it
-                        if (trimmed.StartsWith("\"") && trimmed.EndsWith("\"")) return trimmed;
-                        // Otherwise wrap in quotes
-                        return $"\"{trimmed}\"";
-                    });
-                    var newJson = $"[{string.Join(",", jsonItems)}]";
-                    listingsToUpdate.Add((id, newJson));
-                }
-            }
-        }
-
-        foreach(var item in listingsToUpdate) {
-            using var updateCmd = connection.CreateCommand();
-            updateCmd.CommandText = "UPDATE \"Listings\" SET \"Photos\" = @p1 WHERE \"Id\" = @p2";
-            var p1 = updateCmd.CreateParameter(); p1.ParameterName = "@p1"; p1.Value = item.NewPhotos; updateCmd.Parameters.Add(p1);
-            var p2 = updateCmd.CreateParameter(); p2.ParameterName = "@p2"; p2.Value = item.Id; updateCmd.Parameters.Add(p2);
-            await updateCmd.ExecuteNonQueryAsync();
-        }
-
-        return Ok(new { message = $"Fixed {listingsToUpdate.Count} listings" });
     }
 
     [HttpGet("external")]
@@ -212,8 +100,14 @@ namespace Bridge.Backend.Controllers {
     {
       try {
         // Combine local and external listings
-        var localListings = await _db.Listings.ToListAsync();
+        var localListings = await _db.Listings.AsNoTracking().ToListAsync();
         var externalListings = await _externalProvider.GetListingsAsync();
+        
+        // Transform photo URLs for local listings
+        var baseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
+        foreach (var item in localListings) {
+            item.Photos = item.Photos.Select(p => GetFullUrl(p, baseUrl)).ToList();
+        }
         
         var combined = new List<Listing>();
         combined.AddRange(localListings);
@@ -229,10 +123,13 @@ namespace Bridge.Backend.Controllers {
     [AllowAnonymous]
     public async Task<ActionResult<Listing>> GetById(Guid id)
     {
-      var listing = await _db.Listings.FirstOrDefaultAsync(l => l.Id == id);
+      var listing = await _db.Listings.AsNoTracking().FirstOrDefaultAsync(l => l.Id == id);
       if (listing == null)
         return NotFound(new { message = "Listing not found" });
       
+      var baseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
+      listing.Photos = listing.Photos.Select(p => GetFullUrl(p, baseUrl)).ToList();
+
       return Ok(listing);
     }
     
@@ -254,12 +151,54 @@ namespace Bridge.Backend.Controllers {
       listing.Id = Guid.NewGuid();
       listing.SellerId = Guid.Parse(userIdClaim.Value);
       listing.Status = listing.Status ?? "Active";
-      if (listing.Photos == null)
-        listing.Photos = new List<string>();
+      
+      // Handle Photos: Save Base64 to Disk
+      if (listing.Photos != null && listing.Photos.Count > 0) {
+          var processedPhotos = new List<string>();
+          var wwwrootPath = Path.Combine(Directory.GetCurrentDirectory(), "wwwroot");
+          var imagesPath = Path.Combine(wwwrootPath, "images", "listings");
+          
+          if (!Directory.Exists(imagesPath)) Directory.CreateDirectory(imagesPath);
+
+          foreach (var photo in listing.Photos) {
+              if (photo.StartsWith("data:image")) {
+                  try {
+                      var base64Data = photo.Split(',')[1];
+                      var bytes = Convert.FromBase64String(base64Data);
+                      var fileName = $"{Guid.NewGuid()}.jpg";
+                      var filePath = Path.Combine(imagesPath, fileName);
+                      
+                      await System.IO.File.WriteAllBytesAsync(filePath, bytes);
+                      processedPhotos.Add($"/images/listings/{fileName}"); // Save relative path
+                  } catch (Exception ex) {
+                      Console.WriteLine($"Failed to save image: {ex.Message}");
+                      // If fail, just skip or keep original
+                      processedPhotos.Add(photo); 
+                  }
+              } else {
+                  processedPhotos.Add(photo);
+              }
+          }
+          listing.Photos = processedPhotos;
+      } else {
+          listing.Photos = new List<string>();
+      }
       
       _db.Listings.Add(listing);
       await _db.SaveChangesAsync();
+      
+      // Return with full URLs for immediate display
+      var baseUrl = $"{Request.Scheme}://{Request.Host}{Request.PathBase}";
+      listing.Photos = listing.Photos.Select(p => GetFullUrl(p, baseUrl)).ToList();
+
       return CreatedAtAction(nameof(GetById), new { id = listing.Id }, listing);
+    }
+
+    private string GetFullUrl(string path, string baseUrl) {
+        if (string.IsNullOrEmpty(path)) return path;
+        if (path.StartsWith("http") || path.StartsWith("data:")) return path;
+        if (path.StartsWith("/")) return $"{baseUrl}{path}";
+        return $"{baseUrl}/{path}";
     }
   }
 }
