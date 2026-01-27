@@ -18,9 +18,10 @@ builder.Services.AddControllers().AddJsonOptions(options => {
 builder.Services.AddSignalR();
 builder.Services.AddCors(options => {
     options.AddDefaultPolicy(policy => 
-        policy.AllowAnyOrigin()
+        policy.WithOrigins("http://localhost:5173", "https://the-bridge-frontend.vercel.app")
               .AllowAnyHeader()
-              .AllowAnyMethod());
+              .AllowAnyMethod()
+              .AllowCredentials());
 });
 
 // EF Core (PostgreSQL)
