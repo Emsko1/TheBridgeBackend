@@ -28,6 +28,7 @@ namespace Bridge.Backend.Controllers {
     }
 
     [HttpPost("register")]
+    [Authorize]
     [AllowAnonymous]
     public async Task<IActionResult> Register([FromBody] RegisterDto registerDto){
       try {

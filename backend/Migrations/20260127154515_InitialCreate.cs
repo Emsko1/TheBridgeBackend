@@ -28,6 +28,26 @@ namespace Bridge.Backend.Migrations
                 });
 
             migrationBuilder.CreateTable(
+                name: "Deliveries",
+                columns: table => new
+                {
+                    Id = table.Column<Guid>(type: "uuid", nullable: false),
+                    ListingId = table.Column<Guid>(type: "uuid", nullable: false),
+                    BuyerId = table.Column<Guid>(type: "uuid", nullable: false),
+                    SellerId = table.Column<Guid>(type: "uuid", nullable: false),
+                    PickupAddress = table.Column<string>(type: "text", nullable: false),
+                    DeliveryAddress = table.Column<string>(type: "text", nullable: false),
+                    Status = table.Column<string>(type: "text", nullable: false),
+                    CreatedAt = table.Column<DateTime>(type: "timestamp with time zone", nullable: false),
+                    EstimatedDeliveryTime = table.Column<DateTime>(type: "timestamp with time zone", nullable: true),
+                    TrackingHistory = table.Column<string>(type: "text", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_Deliveries", x => x.Id);
+                });
+
+            migrationBuilder.CreateTable(
                 name: "EscrowTransactions",
                 columns: table => new
                 {
@@ -89,7 +109,8 @@ namespace Bridge.Backend.Migrations
                     RejectionReason = table.Column<string>(type: "text", nullable: true),
                     OtpCode = table.Column<string>(type: "text", nullable: true),
                     OtpExpiration = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true),
-                    IsEmailVerified = table.Column<bool>(type: "boolean", nullable: false)
+                    IsEmailVerified = table.Column<bool>(type: "boolean", nullable: false),
+                    LastActive = table.Column<DateTimeOffset>(type: "timestamp with time zone", nullable: true)
                 },
                 constraints: table =>
                 {
@@ -102,6 +123,9 @@ namespace Bridge.Backend.Migrations
         {
             migrationBuilder.DropTable(
                 name: "Bids");
+
+            migrationBuilder.DropTable(
+                name: "Deliveries");
 
             migrationBuilder.DropTable(
                 name: "EscrowTransactions");
